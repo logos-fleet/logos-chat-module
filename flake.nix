@@ -11,9 +11,15 @@
   };
 
   inputs = {
-    # Held at the 0.2.6 release rather than master: master carries a
-    # logos-rust-sdk whose lidl-gen emits declared records as typed Rust
-    # structs, which this module's providers are not written against.
+    # STILL HELD AT 0.2.6, and the reason is now measured rather than assumed:
+    # a current builder's logos-rust-sdk emits declared records as typed Rust
+    # structs (`Status`, `Conversation`, `Message`, `GroupMember`) where the
+    # providers in rust-lib/src/lib.rs return `serde_json::Value` -- 5x E0053.
+    # Moving the pin means adapting those five providers in the same change.
+    #
+    # The mobile Bare outputs exposed below are a property of the BUILDER, so
+    # they appear the moment this pin moves and are absent (not broken) until
+    # then -- `mobileTargets` below is empty on a builder that has none.
     logos-module-builder.url = "github:logos-co/logos-module-builder/0.2.6";
 
     # Pinned to the v0.2.0 release tag (Reliable Channels API, storeQuery,
@@ -32,18 +38,28 @@
       # (the `ChatModule` trait + logos_module_* exports) at rust-lib/generated/,
       # compiles the staticlib, and stages it — all driven by
       # metadata.json#codegen.rust. No build.rs, no per-flake buildRustPackage.
-      module = system:
-        logos-module-builder.lib.mkLogosModule {
-          src = ./.;
-          configFile = ./metadata.json;
-          flakeInputs = {
-            delivery_module = logos-delivery-module;
-          } // inputs;
-        };
+      #
+      # Not a function of the system: mkLogosModule answers for EVERY target it
+      # knows at once, and building it per system only threw four copies away.
+      module = logos-module-builder.lib.mkLogosModule {
+        src = ./.;
+        configFile = ./metadata.json;
+        flakeInputs = {
+          delivery_module = logos-delivery-module;
+        } // inputs;
+      };
+
+      # The mobile pseudo-systems the builder adds to `packages` when its
+      # logos-nix carries the cross sets. Kept out of `systems` above for the
+      # reason the builder keeps them out of its own: a phone gets the Bare
+      # module and none of the other twenty outputs. `? ${t}` rather than a bare
+      # index, so a builder without them is simply a flake without mobile keys.
+      mobileTargets = builtins.filter (t: module.packages ? ${t})
+        [ "aarch64-ios" "aarch64-ios-simulator" "aarch64-android" ];
     in
     {
       packages = forAllSystems (system:
-        let m = (module system).packages.${system};
+        let m = module.packages.${system};
         in m // {
           # CI builds `.#chat_module`; alias it to the plugin package. The full
           # set `m` (default, install, lidl, …) is exposed too, so the UI module
@@ -54,7 +70,17 @@
           # locked delivery input, so the exact delivery_module rev chat_module is
           # built against can be installed alongside it.
           "delivery_module-lgx" = logos-delivery-module.packages.${system}.lgx;
-        });
+        })
+      # nix build .#packages.aarch64-ios.bare — the chat core cross-compiled and
+      # whole-archived into a protocol-free image an iOS app or an APK loads.
+      // nixpkgs.lib.genAttrs mobileTargets (t: module.packages.${t});
+
+      # An Android derivation's `system` is its BUILD platform, so
+      # `packages.aarch64-android` is pinned to the builder's canonical one
+      # (x86_64-linux) and a Mac cannot realise it. This is the same artifact
+      # built from the other one:
+      #   nix build .#legacyPackages.aarch64-darwin.mobile.aarch64-android.bare
+      legacyPackages = module.legacyPackages or { };
 
       # `nix run .#generate` materialises the two gitignored inputs `rust-lib/`
       # references into the working tree, both from the rev the builder pins: the
