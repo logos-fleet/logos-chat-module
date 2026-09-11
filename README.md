@@ -108,12 +108,12 @@ is a matter of giving each host its own session directory (`--config-dir` under
 `logoscore`); `init` fails when the host assigned no such directory. The delivery
 node listens on ports it picks itself, so instances need no port coordination.
 
-A generated client passes the record itself. `logoscore call` cannot — it coerces
-an argument to a bool, a number or a string, never to an object — so from the CLI
-pass the record's JSON text and the module reads it back:
+A generated client passes the record itself. From `logoscore call`, prefix the
+argument with `json:`: the default coercion only produces a bool, a number or a
+string, and `init` takes an object.
 
 ```bash
-logoscore call chat_module init '{"delivery_preset":"logos.test","log_level":"debug"}'
+logoscore call chat_module init 'json:{"delivery_preset":"logos.test","log_level":"debug"}'
 ```
 
 ### Logging
