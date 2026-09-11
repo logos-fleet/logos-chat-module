@@ -11,16 +11,15 @@
   };
 
   inputs = {
-    # STILL HELD AT 0.2.6, and the reason is now measured rather than assumed:
-    # a current builder's logos-rust-sdk emits declared records as typed Rust
-    # structs (`Status`, `Conversation`, `Message`, `GroupMember`) where the
-    # providers in rust-lib/src/lib.rs return `serde_json::Value` -- 5x E0053.
-    # Moving the pin means adapting those five providers in the same change.
+    # Past 0.2.6, whose logos-rust-sdk still generated the provider trait with
+    # `serde_json::Value` in place of the contract's records; the providers in
+    # rust-lib/src/lib.rs are written against the typed ones now.
     #
-    # The mobile Bare outputs exposed below are a property of the BUILDER, so
-    # they appear the moment this pin moves and are absent (not broken) until
-    # then -- `mobileTargets` below is empty on a builder that has none.
-    logos-module-builder.url = "github:logos-co/logos-module-builder/0.2.6";
+    # A rev rather than a tag, and the logos-fleet fork rather than logos-co,
+    # because the mobile Bare outputs exposed below are a property of the
+    # BUILDER and only that line has them yet -- `mobileTargets` is empty on a
+    # builder without them, so this flake degrades rather than breaks.
+    logos-module-builder.url = "github:logos-fleet/logos-module-builder/9b16a0a5102eab5a2a3a890a269eca32f396f700";
 
     # Pinned to the v0.2.0 release tag (Reliable Channels API, storeQuery,
     # layered createNode config; the flat config shape this module sends still
