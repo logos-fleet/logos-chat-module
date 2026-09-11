@@ -6,9 +6,9 @@
 ; `result` (success + value + error string).
 ;
 ; The record types below are the contract's source of truth for wire shapes.
-; Today's codegen materializes them as QVariant/QVariantList on the Qt side
-; (no generated C++ struct) — they document the shape and "light up" if the
-; generators gain struct support.
+; Both codegens materialize them as real types — generated structs on the Qt
+; side, generated Rust structs in the provider — so neither consumer writes a
+; shape down a second time.
 module chat_module {
   version "0.2.2"
   description "Chat module for Logos: e2e-encrypted conversations over delivery_module."

@@ -18,8 +18,10 @@ use logos_generic_chat::{
     StorageConfig,
 };
 // The contract's record types, generated from chat_module.lidl and re-exported
-// at the crate root by the `generated` module in lib.rs. These getters build
-// them directly; nothing here serialises a hand-written mirror any more.
+// at the crate root by the `generated` module in lib.rs. The getters below
+// build them directly, so no shape is written down twice;
+// `persistence::DisplayMessage` stays the stored form and is mapped to
+// `Message` at the boundary.
 use crate::{Conversation, GroupMember, Message, Status};
 
 use crate::delivery::SdkDelivery;
@@ -61,16 +63,6 @@ pub(crate) enum InitError {
     #[error("{0}")]
     Delivery(String),
 }
-
-// ── Contract view types ──────────────────────────────────────────────────────
-//
-// The record types these getters return are the GENERATED ones
-// (`crate::Conversation` / `Message` / `GroupMember` / `Status`), emitted from
-// chat_module.lidl. They used to be hand-written `#[derive(Serialize)]` mirrors
-// serialised to `serde_json::Value`; the generated records are the contract
-// itself, so the mirrors — and the chance of one drifting from the .lidl — are
-// gone. `persistence::DisplayMessage` is still the stored shape and is mapped
-// to `Message` at the boundary.
 
 /// Character cap for a conversation-list preview. Mirrored on the UI so live and
 /// rehydrated previews agree.

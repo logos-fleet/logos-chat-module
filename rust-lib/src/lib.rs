@@ -20,7 +20,9 @@
 //! Return conventions. Status-bearing methods return `result`, surfaced here as
 //! `Result<serde_json::Value, String>`: `Ok(value)` carries any payload (a
 //! conversation id or `Null`), `Err(message)` a human-readable reason.
-//! Collection getters return `serde_json::Value` (a JSON array/object);
+//! The collection getters and `status` return the records generated from
+//! `chat_module.lidl` (`Vec<Conversation>`, `Vec<Message>`, `Vec<GroupMember>`,
+//! `Status`), so the contract is the only place those shapes are written down;
 //! `get_installation_name`/`get_address`/`get_log_path` return a plain string,
 //! empty when not initialised.
 //!
@@ -225,13 +227,6 @@ pub extern "Rust" fn logos_module_install() {
 #[cfg(test)]
 mod tests {
     use super::*;
-
-    // The suite that stood here covered `chat_config`/`config_field`: reading a
-    // `ChatConfig` out of an untyped `Value`, whether it arrived as an object,
-    // as its JSON *text* (all `logoscore call` could send), or as something that
-    // was no record at all. `init` takes a typed `ChatConfig` now, so decoding —
-    // and every one of those cases — belongs to the SDK, and those tests went
-    // with the code they covered. The defaulting below is what is still ours.
 
     /// A named preset is what the caller asked for.
     #[test]
